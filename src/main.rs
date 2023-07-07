@@ -4,11 +4,15 @@
 // Feel free to delete this line.
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
+mod dialog;
+
+use crate::dialog::DialogPlugin;
 use bevy::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugin(DialogPlugin)
         .add_startup_system(setup)
         .run();
 }
