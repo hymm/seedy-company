@@ -3,7 +3,7 @@ use bevy::prelude::*;
 pub struct GameStatePlugin;
 impl Plugin for GameStatePlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<GameState>().add_state::<RunningState>();
+        app.add_state::<GameState>().add_state::<StoreSetupState>();
     }
 }
 
@@ -11,15 +11,19 @@ impl Plugin for GameStatePlugin {
 pub enum GameState {
     #[default]
     Start,
-    Running,
+    StoreSetup,
+    FarmingBattle,
     Failed,
     Success,
 }
 
 #[derive(States, PartialEq, Eq, Default, Debug, Hash, Clone)]
-pub enum RunningState {
+pub enum StoreSetupState {
     #[default]
-    Tutorial,
-    Dialog,
+    Inactive,
+    OpeningDialog,
+    PedestalSelect,
     Inventory,
+    PriceSelect,
+    FarmerBuy,
 }

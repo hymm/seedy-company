@@ -88,7 +88,7 @@ fn button_system(
     for (interaction, mut color) in &mut interaction_query {
         match *interaction {
             Interaction::Clicked => {
-                state.set(GameState::Running);
+                state.set(GameState::StoreSetup);
                 *color = PRESSED_BUTTON.into();
             }
             Interaction::Hovered => {
@@ -108,14 +108,14 @@ fn input_start(
     gamepads: Res<Gamepads>,
 ) {
     if keyboard_input.pressed(KeyCode::Space) || keyboard_input.pressed(KeyCode::Return) {
-        state.set(GameState::Running);
+        state.set(GameState::StoreSetup);
     }
 
     for gamepad in gamepads.iter() {
         if button_inputs.pressed(GamepadButton::new(gamepad, GamepadButtonType::Start))
             || button_inputs.pressed(GamepadButton::new(gamepad, GamepadButtonType::South))
         {
-            state.set(GameState::Running);
+            state.set(GameState::StoreSetup);
         }
     }
 }

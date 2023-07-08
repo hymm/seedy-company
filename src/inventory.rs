@@ -1,22 +1,25 @@
-use crate::constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON};
+use crate::{
+    constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON},
+    game_state::StoreSetupState,
+    store::{ItemDisplay, SelectedPedestal},
+};
 use bevy::prelude::*;
 
 pub struct InventoryPlugin;
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<InventoryState>()
-            .add_startup_system(spawn_items);
+        app.add_startup_system(spawn_items);
 
         // Item Selection systems
-        app.add_system(spawn_inventory.in_schedule(OnEnter(InventoryState::Selection)))
+        app.add_system(spawn_inventory.in_schedule(OnEnter(StoreSetupState::Inventory)))
             .add_systems(
                 (selection_mouse_handler, || {})
-                    .distributive_run_if(in_state(InventoryState::Selection)),
+                    .distributive_run_if(in_state(StoreSetupState::Inventory)),
             )
-            .add_system(despawn_inventory_ui.in_schedule(OnExit(InventoryState::Selection)));
+            .add_system(despawn_inventory_ui.in_schedule(OnExit(StoreSetupState::Inventory)));
 
         // Price Setter Systems
-        app.add_system(spawn_price_setter.in_schedule(OnEnter(InventoryState::SetPrice)))
+        app.add_system(spawn_price_setter.in_schedule(OnEnter(StoreSetupState::PriceSelect)))
             .add_systems(
                 (
                     CloseButton::interaction_handler,
@@ -26,19 +29,12 @@ impl Plugin for InventoryPlugin {
                     QuantityDisplay::update_text,
                     QuantityDisplay::handle_minus_interaction,
                     QuantityDisplay::handle_plus_interaction,
+                    DoneButton::handle_interaction,
                 )
-                    .distributive_run_if(in_state(InventoryState::SetPrice)),
+                    .distributive_run_if(in_state(StoreSetupState::PriceSelect)),
             )
-            .add_system(despawn_price_setter.in_schedule(OnExit(InventoryState::SetPrice)));
+            .add_system(despawn_price_setter.in_schedule(OnExit(StoreSetupState::PriceSelect)));
     }
-}
-
-#[derive(States, PartialEq, Eq, Default, Debug, Hash, Clone)]
-pub enum InventoryState {
-    #[default]
-    Disabled,
-    Selection,
-    SetPrice,
 }
 
 #[derive(Component)]
@@ -183,14 +179,14 @@ fn selection_mouse_handler(
         (Changed<Interaction>, With<InventoryButton>),
     >,
     item_buttons: Query<&InventoryButton>,
-    mut state: ResMut<NextState<InventoryState>>,
+    mut state: ResMut<NextState<StoreSetupState>>,
 ) {
     for (e, interaction, mut color) in &mut interaction_query {
         match *interaction {
             Interaction::Clicked => {
                 let item_entity = item_buttons.get(e).unwrap().item;
                 commands.insert_resource(SetPriceFor(item_entity));
-                state.set(InventoryState::SetPrice);
+                state.set(StoreSetupState::PriceSelect);
                 *color = PRESSED_BUTTON.into();
             }
             Interaction::Hovered => {
@@ -302,14 +298,17 @@ fn spawn_price_setter(
             PriceDisplay::spawn(builder, &asset_server);
 
             builder
-                .spawn(ButtonBundle {
-                    background_color: Color::GRAY.into(),
-                    style: Style {
-                        justify_content: JustifyContent::Center,
+                .spawn((
+                    DoneButton,
+                    ButtonBundle {
+                        background_color: Color::GRAY.into(),
+                        style: Style {
+                            justify_content: JustifyContent::Center,
+                            ..default()
+                        },
                         ..default()
                     },
-                    ..default()
-                })
+                ))
                 .with_children(|minus_builder| {
                     minus_builder
                         .spawn(TextBundle::from_section("Done", default_text_style.clone()));
@@ -359,12 +358,12 @@ impl CloseButton {
             (&Interaction, &mut BackgroundColor),
             (Changed<Interaction>, With<CloseButton>),
         >,
-        mut state: ResMut<NextState<InventoryState>>,
+        mut state: ResMut<NextState<StoreSetupState>>,
     ) {
         for (interaction, mut color) in &mut interaction_query {
             match *interaction {
                 Interaction::Clicked => {
-                    state.set(InventoryState::Selection);
+                    state.set(StoreSetupState::Inventory);
                     *color = PRESSED_BUTTON.into();
                 }
                 Interaction::Hovered => {
@@ -724,6 +723,43 @@ impl QuantityDisplay {
                     price.quantity = (price.quantity + Self::INCREMENT).min(price.max_quantity);
                     price.sell_at = price.sell_at.max(price.quantity * price.store_price);
 
+                    *color = PRESSED_BUTTON.into();
+                }
+                Interaction::Hovered => {
+                    *color = HOVERED_BUTTON.into();
+                }
+                Interaction::None => {
+                    *color = NORMAL_BUTTON.into();
+                }
+            }
+        }
+    }
+}
+
+#[derive(Component)]
+struct DoneButton;
+impl DoneButton {
+    fn handle_interaction(
+        mut interaction_query: Query<
+            (&Interaction, &mut BackgroundColor),
+            (Changed<Interaction>, With<DoneButton>),
+        >,
+        mut state: ResMut<NextState<StoreSetupState>>,
+        set_price_for: Res<SetPriceFor>,
+        sellables: Query<&SellableItem>,
+        selected_pedestal: Res<SelectedPedestal>,
+        mut pedestals: Query<(Entity, &mut Sprite, &mut Handle<Image>), With<ItemDisplay>>,
+        asset_server: Res<AssetServer>,
+    ) {
+        for (interaction, mut color) in &mut interaction_query {
+            match *interaction {
+                Interaction::Clicked => {
+                    let item = sellables.get(set_price_for.0).unwrap();
+                    let (pedestal_entity, mut pedestal_sprite, mut pedestal_texture) =
+                        pedestals.get_mut(selected_pedestal.0).unwrap();
+                    *pedestal_texture = asset_server.load(item.icon_path);
+                    pedestal_sprite.color = Color::default();
+                    state.set(StoreSetupState::PedestalSelect);
                     *color = PRESSED_BUTTON.into();
                 }
                 Interaction::Hovered => {

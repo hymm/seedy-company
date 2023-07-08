@@ -10,6 +10,7 @@ mod game_state;
 mod inventory;
 mod running;
 mod start_menu;
+mod store;
 
 use bevy::prelude::*;
 use dialog::DialogPlugin;
@@ -17,6 +18,7 @@ use game_state::GameStatePlugin;
 use inventory::InventoryPlugin;
 use running::RunningPlugin;
 use start_menu::StartMenuPlugin;
+use store::StorePlugin;
 
 fn main() {
     App::new()
@@ -26,6 +28,7 @@ fn main() {
         .add_plugin(StartMenuPlugin)
         .add_plugin(RunningPlugin)
         .add_plugin(InventoryPlugin)
+        .add_plugin(StorePlugin)
         .add_startup_system(spawn_camera)
         .run();
 }
