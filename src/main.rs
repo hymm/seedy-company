@@ -4,6 +4,7 @@
 // Feel free to delete this line.
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
+mod constants;
 mod dialog;
 mod game_state;
 mod inventory;

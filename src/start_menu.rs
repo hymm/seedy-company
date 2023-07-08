@@ -1,3 +1,4 @@
+use crate::constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON};
 use crate::game_state::GameState;
 use bevy::prelude::*;
 
@@ -11,10 +12,6 @@ impl Plugin for StartMenuPlugin {
             .add_system(despawn_menu.in_schedule(OnExit(GameState::Start)));
     }
 }
-
-const NORMAL_BUTTON: Color = Color::rgba(0.15, 0.15, 0.15, 0.);
-const HOVERED_BUTTON: Color = Color::rgba(0.25, 0.25, 0.25, 0.);
-const PRESSED_BUTTON: Color = Color::rgba(0.35, 0.75, 0.35, 0.);
 
 #[derive(Component)]
 pub struct MenuMarker;
