@@ -10,7 +10,7 @@ impl Plugin for InventoryPlugin {
         // Item Selection systems
         app.add_system(spawn_inventory.in_schedule(OnEnter(InventoryState::Selection)))
             .add_systems(
-                (color_button, selection_keyboard_input)
+                (selection_mouse_handler, || {})
                     .distributive_run_if(in_state(InventoryState::Selection)),
             )
             .add_system(despawn_inventory_ui.in_schedule(OnExit(InventoryState::Selection)));
@@ -48,42 +48,10 @@ struct InventoryButton {
 }
 
 #[derive(Resource)]
-struct Inventory {
-    selected_button: Entity,
-    // list of button entites
-    list: Vec<Entity>,
-}
+struct Inventory;
 
 #[derive(Component)]
 struct InventoryUi;
-
-impl Inventory {
-    fn next_item(&mut self) {
-        let selected_index = self
-            .list
-            .iter()
-            .position(|e| *e == self.selected_button)
-            .unwrap();
-        self.selected_button = if selected_index + 1 == self.list.len() {
-            self.list[0]
-        } else {
-            self.list[selected_index + 1]
-        }
-    }
-
-    fn prev_item(&mut self) {
-        let selected_index = self
-            .list
-            .iter()
-            .position(|e| *e == self.selected_button)
-            .unwrap();
-        self.selected_button = if selected_index == 0 {
-            self.list[self.list.len() - 1]
-        } else {
-            self.list[selected_index - 1]
-        }
-    }
-}
 
 #[derive(Component, Clone)]
 pub struct SellableItem {
@@ -173,8 +141,6 @@ fn spawn_inventory(
     mut commands: Commands,
     items: Query<(Entity, &Handle<Image>), With<SellableItem>>,
 ) {
-    let mut first_button = Entity::PLACEHOLDER;
-    let mut list = Vec::new();
     commands
         .spawn((
             InventoryUi,
@@ -191,7 +157,7 @@ fn spawn_inventory(
         ))
         .with_children(|builder| {
             for (e, handle) in items.iter() {
-                let entity = builder
+                builder
                     .spawn((ButtonBundle::default(), InventoryButton { item: e }))
                     .with_children(|builder| {
                         builder.spawn(ImageBundle {
@@ -205,52 +171,35 @@ fn spawn_inventory(
                             },
                             ..default()
                         });
-                    })
-                    .id();
-                list.push(entity);
-                if first_button == Entity::PLACEHOLDER {
-                    first_button = entity;
-                }
+                    });
             }
         });
-    commands.insert_resource(Inventory {
-        selected_button: first_button,
-        list,
-    });
 }
 
-fn color_button(
-    mut buttons: Query<(Entity, &mut BackgroundColor), With<InventoryButton>>,
-    inventory: ResMut<Inventory>,
-) {
-    for (e, mut color) in &mut buttons {
-        *color = if inventory.selected_button == e {
-            Color::BISQUE.into()
-        } else {
-            Color::GRAY.into()
-        };
-    }
-}
-
-fn selection_keyboard_input(
+fn selection_mouse_handler(
     mut commands: Commands,
-    keys: Res<Input<KeyCode>>,
-    mut inventory: ResMut<Inventory>,
-    mut state: ResMut<NextState<InventoryState>>,
+    mut interaction_query: Query<
+        (Entity, &Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<InventoryButton>),
+    >,
     item_buttons: Query<&InventoryButton>,
+    mut state: ResMut<NextState<InventoryState>>,
 ) {
-    if keys.just_pressed(KeyCode::Left) || keys.just_pressed(KeyCode::Up) {
-        inventory.prev_item();
-    }
-
-    if keys.just_pressed(KeyCode::Right) || keys.just_pressed(KeyCode::Down) {
-        inventory.next_item();
-    }
-
-    if keys.just_pressed(KeyCode::Space) {
-        let item_entity = item_buttons.get(inventory.selected_button).unwrap().item;
-        commands.insert_resource(SetPriceFor(item_entity));
-        state.set(InventoryState::SetPrice);
+    for (e, interaction, mut color) in &mut interaction_query {
+        match *interaction {
+            Interaction::Clicked => {
+                let item_entity = item_buttons.get(e).unwrap().item;
+                commands.insert_resource(SetPriceFor(item_entity));
+                state.set(InventoryState::SetPrice);
+                *color = PRESSED_BUTTON.into();
+            }
+            Interaction::Hovered => {
+                *color = HOVERED_BUTTON.into();
+            }
+            Interaction::None => {
+                *color = NORMAL_BUTTON.into();
+            }
+        }
     }
 }
 
