@@ -4,6 +4,7 @@ pub struct DialogPlugin;
 impl Plugin for DialogPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(YarnPlugin)
+            .add_event::<DialogExited>()
             .add_startup_system(spawn_dialog)
             .add_system(dialog_ready)
             .add_system(dialogue_display)
@@ -23,6 +24,10 @@ struct DialogText;
 struct YarnDialog {
     pub handle: Handle<YarnAsset>,
     pub start_node: String,
+}
+
+pub struct DialogExited {
+    pub node: String,
 }
 
 fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -174,6 +179,7 @@ fn dialog_input_handling(
 
 fn dialogue_display(
     mut commands: Commands,
+    mut events: EventWriter<DialogExited>,
     mut text: Query<(&mut Text, &mut DialogueRunner), With<DialogText>>,
     dialog: Query<Entity, With<Dialog>>,
 ) {
@@ -197,6 +203,9 @@ fn dialogue_display(
                 }
             }
             Statements::Exit => {
+                events.send(DialogExited {
+                    node: runner.current_node_name.clone(),
+                });
                 commands.entity(dialog.single()).despawn_recursive();
             }
             _ => {}
