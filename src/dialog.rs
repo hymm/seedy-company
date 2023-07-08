@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::system::Command, prelude::*};
 use bevy_mod_yarn::prelude::{Dialogue, DialogueRunner, Statements, YarnAsset, YarnPlugin};
 pub struct DialogPlugin;
 impl Plugin for DialogPlugin {
@@ -20,7 +20,10 @@ struct Dialog;
 struct DialogText;
 
 #[derive(Component)]
-struct YarnDialog(pub Handle<YarnAsset>);
+struct YarnDialog {
+    pub handle: Handle<YarnAsset>,
+    pub start_node: String,
+}
 
 fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
@@ -33,6 +36,7 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
                         height: Val::Percent(100.),
                     },
                     flex_direction: FlexDirection::Row,
+                    display: Display::None,
                     ..default()
                 },
                 ..default()
@@ -80,7 +84,6 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
                     // Dialog Text
                     builder.spawn((
                         DialogText,
-                        YarnDialog(asset_server.load("dialogs/basic.yarn")),
                         TextBundle::from_section(
                             "blah",
                             TextStyle {
@@ -127,19 +130,25 @@ fn dialog_ready(
     mut events: EventReader<AssetEvent<YarnAsset>>,
     dialogues: Res<Assets<YarnAsset>>,
     mut commands: Commands,
-    dialog: Query<(Entity, &YarnDialog), With<DialogText>>,
+    dialog_text: Query<(Entity, &YarnDialog), With<DialogText>>,
+    mut dialog: Query<&mut Style, With<Dialog>>,
 ) {
-    if let Ok((e, y)) = dialog.get_single() {
+    if let Ok((e, y)) = dialog_text.get_single() {
         for event in &mut events {
-            if let AssetEvent::Created { handle } = event {
-                if *handle == y.0 {
-                    if let Some(dialogues) = dialogues.get(handle) {
-                        commands
-                            .entity(e)
-                            .insert(DialogueRunner::new(dialogues.clone(), "Start"));
+            match event {
+                AssetEvent::Created { handle } | AssetEvent::Modified { handle } => {
+                    if *handle == y.handle {
+                        if let Some(dialogues) = dialogues.get(handle) {
+                            commands
+                                .entity(e)
+                                .insert(DialogueRunner::new(dialogues.clone(), &y.start_node));
+
+                            dialog.single_mut().display = Display::Flex;
+                        }
                     }
                 }
-            };
+                _ => {}
+            }
         }
     }
 }
@@ -172,8 +181,8 @@ fn dialogue_display(
         let text = &mut text.sections[0].value;
         *text = "".to_string();
         match runner.current_statement() {
-            Statements::Dialogue(Dialogue { who, what, .. }) => {
-                text.push_str(&format!("{}: {}\n", who, what));
+            Statements::Dialogue(Dialogue { who: _who, what, .. }) => {
+                text.push_str(&format!("{}\n", what));
             }
             Statements::Choice(_) => {
                 let (choices, current_choice_index) = runner.get_current_choices();
@@ -190,5 +199,22 @@ fn dialogue_display(
             }
             _ => {}
         }
+    }
+}
+
+pub struct ShowDialog {
+    pub handle: Handle<YarnAsset>,
+    pub start_node: String,
+}
+
+impl Command for ShowDialog {
+    fn write(self, world: &mut World) {
+        let dialog_text_entity = world
+            .query_filtered::<Entity, With<DialogText>>()
+            .single(world);
+        world.entity_mut(dialog_text_entity).insert(YarnDialog {
+            handle: self.handle,
+            start_node: self.start_node,
+        });
     }
 }

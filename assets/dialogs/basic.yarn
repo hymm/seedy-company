@@ -1,4 +1,4 @@
-title: Start
+title: Sample
 ---
 Lamik: hi !
 Dona: good morning , how are you ?
@@ -6,4 +6,11 @@ Dona: good morning , how are you ?
    Dona: yes
 -> Lamik: fine !
    Dona: good to hear
+===
+
+title: Welcome
+---
+Welcome to Moondrop Canyon.
+You're the new owner of Seedy Company.
+Sell goods to farmers and help their farms grow.
 ===
