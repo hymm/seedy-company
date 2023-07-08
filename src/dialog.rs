@@ -181,7 +181,9 @@ fn dialogue_display(
         let text = &mut text.sections[0].value;
         *text = "".to_string();
         match runner.current_statement() {
-            Statements::Dialogue(Dialogue { who: _who, what, .. }) => {
+            Statements::Dialogue(Dialogue {
+                who: _who, what, ..
+            }) => {
                 text.push_str(&format!("{}\n", what));
             }
             Statements::Choice(_) => {

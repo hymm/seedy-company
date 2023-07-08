@@ -6,16 +6,16 @@
 
 mod dialog;
 mod game_state;
+mod inventory;
 mod running;
 mod start_menu;
-mod inventory;
 
 use bevy::prelude::*;
 use dialog::DialogPlugin;
 use game_state::GameStatePlugin;
+use inventory::InventoryPlugin;
 use running::RunningPlugin;
 use start_menu::StartMenuPlugin;
-use inventory::InventoryPlugin;
 
 fn main() {
     App::new()
@@ -25,10 +25,10 @@ fn main() {
         .add_plugin(StartMenuPlugin)
         .add_plugin(RunningPlugin)
         .add_plugin(InventoryPlugin)
-        .add_startup_system(setup)
+        .add_startup_system(spawn_camera)
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
