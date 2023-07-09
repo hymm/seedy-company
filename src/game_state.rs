@@ -47,6 +47,7 @@ impl StoreSetupState {
 pub enum FarmingBattleState {
     #[default]
     Inactive,
+    CheckSeeded,
     ApplyItems,
     ShowSummary,
     // this state exists to avoid a bug with the dialog system
@@ -55,7 +56,7 @@ pub enum FarmingBattleState {
 
 impl FarmingBattleState {
     fn enter_state(mut state: ResMut<NextState<FarmingBattleState>>) {
-        state.set(FarmingBattleState::ApplyItems);
+        state.set(FarmingBattleState::CheckSeeded);
     }
 
     fn exit_state(mut state: ResMut<NextState<FarmingBattleState>>) {

@@ -12,10 +12,16 @@ pub struct FarmPlugin;
 impl Plugin for FarmPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(FarmState::spawn_farm.in_schedule(OnEnter(GameState::FarmingBattle)))
+            .add_system(FarmState::update_farm.run_if(in_state(GameState::FarmingBattle)))
+            .add_system(
+                check_seeded
+                    .run_if(in_state(FarmingBattleState::CheckSeeded))
+                    .run_if(on_timer(Duration::from_secs_f32(0.5))),
+            )
             .add_system(
                 apply_active_item
                     .run_if(in_state(FarmingBattleState::ApplyItems))
-                    .run_if(on_timer(Duration::from_secs_f32(0.2))),
+                    .run_if(on_timer(Duration::from_secs_f32(0.5))),
             )
             .add_system(active_items_done.run_if(in_state(FarmingBattleState::ApplyItems)))
             .add_system(enter_summary.in_schedule(OnEnter(FarmingBattleState::ShowSummary)))
@@ -25,7 +31,7 @@ impl Plugin for FarmPlugin {
     }
 }
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
 enum FarmTile {
     Dirt,
     Tilled,
@@ -42,7 +48,7 @@ impl FarmTile {
             FarmTile::Tilled => "images/Tilled_Tile.png",
             FarmTile::Seeded => "images/Seed_Tile.png",
             FarmTile::SproutedDry => "images/Dry_Sprout_Tile.png",
-            FarmTile::SproutedWet => "images/Wet_Sprout_Tile.png",
+            FarmTile::SproutedWet => "images/Watered_Sprout_Tile.png",
             FarmTile::FullGrown => "images/Blueberry_Tile.png",
             FarmTile::Failed => "images/Fail_Sprout_Tile.png",
         }
@@ -94,10 +100,73 @@ impl FarmState {
             commands.entity(e).despawn_recursive();
         }
     }
+
+    fn update_farm(
+        mut q: Query<&mut Handle<Image>, With<FarmTile>>,
+        farm_state: Res<FarmState>,
+        asset_server: Res<AssetServer>,
+    ) {
+        for (index, mut handle) in q.iter_mut().enumerate() {
+            *handle = asset_server.load(farm_state.tiles[index].get_asset_path());
+        }
+    }
+
+    fn find(&mut self, value: FarmTile) -> Option<&mut FarmTile> {
+        self.tiles.iter_mut().find(|tile| **tile == value)
+    }
+}
+
+// transition seeded to sprouted
+fn check_seeded(
+    mut farm_state: ResMut<FarmState>,
+    mut state: ResMut<NextState<FarmingBattleState>>,
+) {
+    let Some(tile) = farm_state.find(FarmTile::Seeded) else {
+      state.set(FarmingBattleState::ApplyItems);
+      return;
+    };
+    *tile = FarmTile::SproutedDry;
 }
 
 fn apply_active_item(mut active_items: ResMut<ActiveItems>, mut farm_state: ResMut<FarmState>) {
     if let Some(active_item) = active_items.items.get_mut(0) {
+        match active_item.item_type {
+            crate::inventory::ItemType::Hoe => {
+                let Some(tile) = farm_state.find(FarmTile::Dirt) else {
+                  active_items.items.pop_front();
+                  return;
+                };
+                *tile = FarmTile::Tilled;
+            }
+            crate::inventory::ItemType::WateringCan => {
+                let Some(tile) = farm_state.find(FarmTile::SproutedDry) else {
+                active_items.items.pop_front();
+                return;
+              };
+                *tile = FarmTile::SproutedWet;
+            }
+            crate::inventory::ItemType::Scythe => {
+                let Some(tile) = farm_state.find(FarmTile::FullGrown) else {
+                active_items.items.pop_front();
+                return;
+              };
+                *tile = FarmTile::Dirt;
+            }
+            crate::inventory::ItemType::ParsnipSeed => {
+                let Some(tile) = farm_state.find(FarmTile::Tilled) else {
+                active_items.items.pop_front();
+                return;
+              };
+                *tile = FarmTile::Seeded;
+            }
+            crate::inventory::ItemType::BlueberrySeed => {
+                let Some(tile) = farm_state.find(FarmTile::Tilled) else {
+                active_items.items.pop_front();
+                return;
+              };
+                *tile = FarmTile::Seeded;
+            }
+        }
         active_item.uses -= 1;
         if active_item.uses == 0 {
             active_items.items.pop_front();
