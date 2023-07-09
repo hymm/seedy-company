@@ -15,6 +15,7 @@ mod store;
 
 use bevy::prelude::*;
 use dialog::DialogPlugin;
+use farm::FarmPlugin;
 use game_state::GameStatePlugin;
 use inventory::InventoryPlugin;
 use running::RunningPlugin;
@@ -30,6 +31,7 @@ fn main() {
         .add_plugin(RunningPlugin)
         .add_plugin(InventoryPlugin)
         .add_plugin(StorePlugin)
+        .add_plugin(FarmPlugin)
         .add_startup_system(spawn_camera)
         .run();
 }

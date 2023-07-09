@@ -22,8 +22,13 @@ impl Plugin for StorePlugin {
 
         app.add_system(show_farmer_dialog.in_schedule(OnEnter(StoreSetupState::FarmerBuy)))
             .add_system(farmer_buy_done.run_if(in_state(StoreSetupState::FarmerBuy)));
+
+        app.add_system(despawn_store.in_schedule(OnExit(GameState::StoreSetup)));
     }
 }
+
+#[derive(Component)]
+pub struct Store;
 
 #[derive(Component)]
 pub struct ItemDisplay;
@@ -45,6 +50,7 @@ fn spawn_pedestals(mut commands: Commands) {
     for i in 0..3 {
         commands.spawn((
             ItemDisplay,
+            Store,
             SpriteBundle {
                 sprite: Sprite {
                     color: Color::RED,
@@ -156,5 +162,11 @@ fn farmer_buy_done(mut events: EventReader<DialogExited>, mut state: ResMut<Next
         if &event.node == "FarmerBuy" {
             state.set(GameState::FarmingBattle);
         }
+    }
+}
+
+fn despawn_store(mut commands: Commands, store: Query<Entity, With<Store>>) {
+    for e in &store {
+        commands.entity(e).despawn_recursive();
     }
 }
