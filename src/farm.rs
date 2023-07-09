@@ -38,8 +38,7 @@ impl Plugin for FarmPlugin {
         );
 
         app.add_system(enter_summary.in_schedule(OnEnter(FarmingBattleState::ShowSummary)))
-            .add_system(after_summary.run_if(in_state(FarmingBattleState::ShowSummary)))
-            .add_system(back_to_store.in_schedule(OnEnter(FarmingBattleState::DelayTransition)));
+            .add_system(after_summary.run_if(in_state(FarmingBattleState::ShowSummary)));
     }
 }
 
@@ -227,17 +226,10 @@ fn enter_summary(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn after_summary(
-    mut events: EventReader<DialogExited>,
-    mut state: ResMut<NextState<FarmingBattleState>>,
-) {
+fn after_summary(mut events: EventReader<DialogExited>, mut state2: ResMut<NextState<GameState>>) {
     for event in &mut events {
         if &event.node == "FarmingSummary" {
-            state.set(FarmingBattleState::DelayTransition);
+            state2.set(GameState::StoreSetup);
         }
     }
-}
-
-fn back_to_store(mut state: ResMut<NextState<GameState>>) {
-    state.set(GameState::StoreSetup);
 }

@@ -1,4 +1,4 @@
-use bevy::{ecs::system::Command, prelude::*};
+use bevy::{asset::LoadState, ecs::system::Command, prelude::*};
 use bevy_mod_yarn::prelude::{Dialogue, DialogueRunner, Statements, YarnAsset, YarnPlugin};
 
 use crate::constants::{FONT, TEXT_SIZE};
@@ -90,7 +90,7 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
                     builder.spawn((
                         DialogText,
                         TextBundle::from_section(
-                            "blah",
+                            "",
                             TextStyle {
                                 font: asset_server.load(FONT),
                                 font_size: TEXT_SIZE,
@@ -137,9 +137,29 @@ fn dialog_ready(
 }
 
 struct OpenDialog;
-fn open_dialog(mut events: EventReader<OpenDialog>, mut dialog: Query<&mut Style, With<Dialog>>) {
+fn open_dialog(
+    mut commands: Commands,
+    mut events: EventReader<OpenDialog>,
+    mut dialog: Query<&mut Style, With<Dialog>>,
+    dialog_text: Query<(Entity, &YarnDialog), With<DialogText>>,
+    asset_server: Res<AssetServer>,
+    dialogues: Res<Assets<YarnAsset>>,
+) {
     if !events.is_empty() {
         dialog.single_mut().display = Display::Flex;
+
+        // hacky bug fix
+        if let Ok((e, yarn_dialog)) = dialog_text.get_single() {
+            if asset_server.get_load_state(yarn_dialog.handle.clone_weak()) == LoadState::Loaded {
+                if let Some(dialogues) = dialogues.get(&yarn_dialog.handle) {
+                    commands.entity(e).insert(DialogueRunner::new(
+                        dialogues.clone(),
+                        &yarn_dialog.start_node,
+                    ));
+                    // open_events.send(OpenDialog);
+                }
+            }
+        }
     }
     events.clear();
 }
