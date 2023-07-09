@@ -66,6 +66,9 @@ impl FarmTile {
     }
 }
 
+#[derive(Component)]
+struct FarmMarker;
+
 #[derive(Resource, Clone)]
 struct FarmState {
     tiles: [FarmTile; 25],
@@ -76,6 +79,16 @@ impl FarmState {
         asset_server: Res<AssetServer>,
         farm_state: Option<ResMut<FarmState>>,
     ) {
+        // spawn background
+        commands.spawn((
+            FarmMarker,
+            SpriteBundle {
+                texture: asset_server.load("images/Farm_Screen_Spring.png"),
+                ..default()
+            },
+        ));
+
+        // spawn tiles
         let farm_state = if let Some(farm_state) = farm_state {
             farm_state.clone()
         } else {
@@ -84,18 +97,20 @@ impl FarmState {
             }
         };
         const TILE_SIZE: f32 = 24.;
-        let start_pos = -TILE_SIZE * 2.;
+        let start_pos_x = -TILE_SIZE * 4. + 7.;
+        let start_pos_y = -TILE_SIZE * 1. - 11.;
         for i in 0..5 {
             for j in 0..5 {
                 let tile = farm_state.tiles[j + i * 5];
                 commands.spawn((
+                    FarmMarker,
                     tile,
                     SpriteBundle {
                         texture: asset_server.load(tile.get_asset_path()),
                         transform: Transform::from_xyz(
-                            start_pos + TILE_SIZE * i as f32,
-                            start_pos + TILE_SIZE * j as f32,
-                            0.0,
+                            start_pos_x + TILE_SIZE * i as f32,
+                            start_pos_y + TILE_SIZE * j as f32,
+                            1.0,
                         ),
                         ..default()
                     },
@@ -106,7 +121,7 @@ impl FarmState {
         commands.insert_resource(farm_state);
     }
 
-    fn despawn_farm(mut commands: Commands, q: Query<Entity, With<FarmTile>>) {
+    fn despawn_farm(mut commands: Commands, q: Query<Entity, With<FarmMarker>>) {
         for e in &q {
             commands.entity(e).despawn_recursive();
         }
