@@ -146,10 +146,11 @@ fn open_dialog(mut events: EventReader<OpenDialog>, mut dialog: Query<&mut Style
 
 fn dialog_input_handling(
     keys: Res<Input<KeyCode>>,
+    mouse: Res<Input<MouseButton>>,
     mut runners: Query<&mut DialogueRunner, With<DialogText>>,
 ) {
     if let Ok(mut runner) = runners.get_single_mut() {
-        if keys.just_pressed(KeyCode::Space) {
+        if keys.just_pressed(KeyCode::Space) || mouse.just_pressed(MouseButton::Left) {
             runner.next_entry();
         }
         if keys.just_pressed(KeyCode::Down) {
