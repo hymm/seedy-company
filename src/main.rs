@@ -6,6 +6,7 @@
 
 mod constants;
 mod dialog;
+mod farm;
 mod game_state;
 mod inventory;
 mod running;

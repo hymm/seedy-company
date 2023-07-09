@@ -5,8 +5,10 @@ impl Plugin for DialogPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(YarnPlugin)
             .add_event::<DialogExited>()
+            .add_event::<OpenDialog>()
             .add_startup_system(spawn_dialog)
             .add_system(dialog_ready)
+            .add_system(open_dialog)
             .add_system(dialogue_display)
             .add_system(dialog_input_handling);
     }
@@ -136,7 +138,7 @@ fn dialog_ready(
     dialogues: Res<Assets<YarnAsset>>,
     mut commands: Commands,
     dialog_text: Query<(Entity, &YarnDialog), With<DialogText>>,
-    mut dialog: Query<&mut Style, With<Dialog>>,
+    mut open_events: EventWriter<OpenDialog>,
 ) {
     if let Ok((e, y)) = dialog_text.get_single() {
         for event in &mut events {
@@ -147,8 +149,7 @@ fn dialog_ready(
                             commands
                                 .entity(e)
                                 .insert(DialogueRunner::new(dialogues.clone(), &y.start_node));
-
-                            dialog.single_mut().display = Display::Flex;
+                            open_events.send(OpenDialog);
                         }
                     }
                 }
@@ -156,6 +157,14 @@ fn dialog_ready(
             }
         }
     }
+}
+
+struct OpenDialog;
+fn open_dialog(mut events: EventReader<OpenDialog>, mut dialog: Query<&mut Style, With<Dialog>>) {
+    if !events.is_empty() {
+        dialog.single_mut().display = Display::Flex;
+    }
+    events.clear();
 }
 
 fn dialog_input_handling(
@@ -180,10 +189,10 @@ fn dialog_input_handling(
 fn dialogue_display(
     mut commands: Commands,
     mut events: EventWriter<DialogExited>,
-    mut text: Query<(&mut Text, &mut DialogueRunner), With<DialogText>>,
-    dialog: Query<Entity, With<Dialog>>,
+    mut text: Query<(Entity, &mut Text, &mut DialogueRunner), With<DialogText>>,
+    mut dialog: Query<&mut Style, With<Dialog>>,
 ) {
-    if let Ok((mut text, runner)) = text.get_single_mut() {
+    if let Ok((entity, mut text, runner)) = text.get_single_mut() {
         let text = &mut text.sections[0].value;
         *text = "".to_string();
         match runner.current_statement() {
@@ -206,7 +215,11 @@ fn dialogue_display(
                 events.send(DialogExited {
                     node: runner.current_node_name.clone(),
                 });
-                commands.entity(dialog.single()).despawn_recursive();
+                commands
+                    .entity(entity)
+                    .remove::<YarnDialog>()
+                    .remove::<DialogueRunner>();
+                dialog.single_mut().display = Display::None;
             }
             _ => {}
         }
@@ -227,5 +240,6 @@ impl Command for ShowDialog {
             handle: self.handle,
             start_node: self.start_node,
         });
+        world.resource_mut::<Events<OpenDialog>>().send(OpenDialog);
     }
 }

@@ -3,7 +3,9 @@ use bevy::prelude::*;
 pub struct GameStatePlugin;
 impl Plugin for GameStatePlugin {
     fn build(&self, app: &mut App) {
-        app.add_state::<GameState>().add_state::<StoreSetupState>();
+        app.add_state::<GameState>()
+            .add_state::<StoreSetupState>()
+            .add_system(StoreSetupState::exit_state.in_schedule(OnExit(GameState::StoreSetup)));
     }
 }
 
@@ -26,4 +28,10 @@ pub enum StoreSetupState {
     Inventory,
     PriceSelect,
     FarmerBuy,
+}
+
+impl StoreSetupState {
+    fn exit_state(mut state: ResMut<NextState<StoreSetupState>>) {
+        state.set(StoreSetupState::Inactive);
+    }
 }
