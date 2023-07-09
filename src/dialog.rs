@@ -1,7 +1,7 @@
 use bevy::{ecs::system::Command, prelude::*};
 use bevy_mod_yarn::prelude::{Dialogue, DialogueRunner, Statements, YarnAsset, YarnPlugin};
 
-use crate::constants::{TEXT_SIZE, FONT};
+use crate::constants::{FONT, TEXT_SIZE};
 pub struct DialogPlugin;
 impl Plugin for DialogPlugin {
     fn build(&self, app: &mut App) {

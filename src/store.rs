@@ -1,7 +1,10 @@
+use std::collections::VecDeque;
+
 use crate::{
-    constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON, TEXT_SIZE, FONT},
+    constants::{FONT, HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON, TEXT_SIZE},
     dialog::{DialogExited, ShowDialog},
     game_state::{GameState, StoreSetupState},
+    inventory::ActiveItem,
 };
 use bevy::{prelude::*, window::PrimaryWindow};
 
@@ -176,9 +179,22 @@ fn show_farmer_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn farmer_buy_done(mut events: EventReader<DialogExited>, mut state: ResMut<NextState<GameState>>) {
+#[derive(Resource)]
+pub struct ActiveItems {
+    pub items: VecDeque<ActiveItem>,
+}
+
+fn farmer_buy_done(
+    mut commands: Commands,
+    mut events: EventReader<DialogExited>,
+    mut state: ResMut<NextState<GameState>>,
+    active_items: Query<&ActiveItem>,
+) {
     for event in &mut events {
         if &event.node == "FarmerBuy" {
+            let items = active_items.iter().copied().collect();
+            commands.insert_resource(ActiveItems { items });
+
             state.set(GameState::FarmingBattle);
         }
     }

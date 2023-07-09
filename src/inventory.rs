@@ -1,5 +1,5 @@
 use crate::{
-    constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON, TEXT_SIZE, FONT},
+    constants::{FONT, HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON, TEXT_SIZE},
     game_state::StoreSetupState,
     store::{ItemDisplay, SelectedPedestal},
 };
@@ -52,6 +52,7 @@ struct InventoryUi;
 #[derive(Component, Clone)]
 pub struct SellableItem {
     name: &'static str,
+    item_type: ItemType,
     icon_path: &'static str,
     description: &'static str,
     // price it costs shopkeeper
@@ -63,6 +64,7 @@ pub struct SellableItem {
 const SELLABLE_ITEMS: [SellableItem; 5] = [
     SellableItem {
         name: "Hoe",
+        item_type: ItemType::Hoe,
         icon_path: "images/Hoe.png",
         description: "Used to till the ground.",
         store_price: 100,
@@ -70,6 +72,7 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
     },
     SellableItem {
         name: "Watering Can",
+        item_type: ItemType::WateringCan,
         icon_path: "images/Watering_Can.png",
         description: "Used for watering plants",
         store_price: 50,
@@ -77,6 +80,7 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
     },
     SellableItem {
         name: "Scythe",
+        item_type: ItemType::Scythe,
         icon_path: "images/Scythe.png",
         description: "Used for harvesting plants",
         store_price: 75,
@@ -84,15 +88,17 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
     },
     SellableItem {
         name: "Parsnip Seeds",
+        item_type: ItemType::ParsnipSeed,
         icon_path: "images/Parsnip_Seeds.png",
-        description: "Grows in 3 days, Sells for 400g",
+        description: "Grows in 3 days, Sells for 100g",
         store_price: 20,
         buy_back_price: 40,
     },
     SellableItem {
         name: "Blueberry Seeds",
+        item_type: ItemType::BlueberrySeed,
         icon_path: "images/Blueberry_Seeds.png",
-        description: "Item 5",
+        description: "Grows in 5 days, Sells for 200g",
         store_price: 18,
         buy_back_price: 50,
     },
@@ -709,10 +715,26 @@ impl QuantityDisplay {
     }
 }
 
+#[derive(Component, Copy, Clone)]
+pub struct ActiveItem {
+    pub item_type: ItemType,
+    pub uses: i32,
+}
+
+#[derive(Clone, Copy)]
+pub enum ItemType {
+    Hoe,
+    WateringCan,
+    Scythe,
+    ParsnipSeed,
+    BlueberrySeed,
+}
+
 #[derive(Component)]
 struct DoneButton;
 impl DoneButton {
     fn handle_interaction(
+        mut commands: Commands,
         mut interaction_query: Query<
             (&Interaction, &mut BackgroundColor),
             (Changed<Interaction>, With<DoneButton>),
@@ -722,6 +744,7 @@ impl DoneButton {
         sellables: Query<&SellableItem>,
         selected_pedestal: Res<SelectedPedestal>,
         mut pedestals: Query<(Entity, &mut Sprite, &mut Handle<Image>), With<ItemDisplay>>,
+        price: Query<&mut PriceSetterUi>,
         asset_server: Res<AssetServer>,
     ) {
         for (interaction, mut color) in &mut interaction_query {
@@ -732,6 +755,10 @@ impl DoneButton {
                         pedestals.get_mut(selected_pedestal.0).unwrap();
                     *pedestal_texture = asset_server.load(item.icon_path);
                     pedestal_sprite.color = Color::default();
+                    commands.entity(pedestal_entity).insert(ActiveItem {
+                        item_type: item.item_type,
+                        uses: price.single().quantity,
+                    });
                     state.set(StoreSetupState::PedestalSelect);
                     *color = PRESSED_BUTTON.into();
                 }
