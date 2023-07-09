@@ -49,6 +49,7 @@ pub enum FarmingBattleState {
     Inactive,
     CheckSeeded,
     ApplyItems,
+    CheckFailed,
     ShowSummary,
     // this state exists to avoid a bug with the dialog system
     DelayTransition,

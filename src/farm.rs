@@ -11,22 +11,34 @@ use crate::{
 pub struct FarmPlugin;
 impl Plugin for FarmPlugin {
     fn build(&self, app: &mut App) {
+        // GameState::FarmingBattle systems
         app.add_system(FarmState::spawn_farm.in_schedule(OnEnter(GameState::FarmingBattle)))
             .add_system(FarmState::update_farm.run_if(in_state(GameState::FarmingBattle)))
+            .add_system(FarmState::despawn_farm.in_schedule(OnExit(GameState::FarmingBattle)));
+
+        app.add_system(check_full_grown.in_schedule(OnEnter(FarmingBattleState::CheckSeeded)))
             .add_system(
                 check_seeded
                     .run_if(in_state(FarmingBattleState::CheckSeeded))
                     .run_if(on_timer(Duration::from_secs_f32(0.5))),
-            )
-            .add_system(
-                apply_active_item
-                    .run_if(in_state(FarmingBattleState::ApplyItems))
-                    .run_if(on_timer(Duration::from_secs_f32(0.5))),
-            )
-            .add_system(active_items_done.run_if(in_state(FarmingBattleState::ApplyItems)))
-            .add_system(enter_summary.in_schedule(OnEnter(FarmingBattleState::ShowSummary)))
+            );
+
+        // FarmingBattleState::ApplyItems systems
+        app.add_system(
+            apply_active_item
+                .run_if(in_state(FarmingBattleState::ApplyItems))
+                .run_if(on_timer(Duration::from_secs_f32(0.5))),
+        )
+        .add_system(active_items_done.run_if(in_state(FarmingBattleState::ApplyItems)));
+
+        app.add_system(
+            check_after
+                .run_if(in_state(FarmingBattleState::CheckFailed))
+                .run_if(on_timer(Duration::from_secs_f32(0.5))),
+        );
+
+        app.add_system(enter_summary.in_schedule(OnEnter(FarmingBattleState::ShowSummary)))
             .add_system(after_summary.run_if(in_state(FarmingBattleState::ShowSummary)))
-            .add_system(FarmState::despawn_farm.in_schedule(OnExit(GameState::FarmingBattle)))
             .add_system(back_to_store.in_schedule(OnEnter(FarmingBattleState::DelayTransition)));
     }
 }
@@ -39,7 +51,7 @@ enum FarmTile {
     SproutedDry,
     SproutedWet,
     FullGrown,
-    // Failed,
+    Failed,
 }
 impl FarmTile {
     fn get_asset_path(&self) -> &str {
@@ -50,7 +62,7 @@ impl FarmTile {
             FarmTile::SproutedDry => "images/Dry_Sprout_Tile.png",
             FarmTile::SproutedWet => "images/Watered_Sprout_Tile.png",
             FarmTile::FullGrown => "images/Blueberry_Tile.png",
-            // FarmTile::Failed => "images/Fail_Sprout_Tile.png",
+            FarmTile::Failed => "images/Fail_Sprout_Tile.png",
         }
     }
 }
@@ -116,6 +128,14 @@ impl FarmState {
     }
 }
 
+fn check_full_grown(mut farm_state: ResMut<FarmState>) {
+    for tile in farm_state.tiles.iter_mut() {
+        if *tile == FarmTile::SproutedWet {
+            *tile = FarmTile::FullGrown;
+        }
+    }
+}
+
 // transition seeded to sprouted
 fn check_seeded(
     mut farm_state: ResMut<FarmState>,
@@ -146,11 +166,14 @@ fn apply_active_item(mut active_items: ResMut<ActiveItems>, mut farm_state: ResM
                 *tile = FarmTile::SproutedWet;
             }
             crate::inventory::ItemType::Scythe => {
-                let Some(tile) = farm_state.find(FarmTile::FullGrown) else {
-                active_items.items.pop_front();
-                return;
-              };
-                *tile = FarmTile::Dirt;
+                if let Some(tile) = farm_state.find(FarmTile::FullGrown) {
+                    *tile = FarmTile::Dirt;
+                } else if let Some(tile) = farm_state.find(FarmTile::Failed) {
+                    *tile = FarmTile::Dirt;
+                } else {
+                    active_items.items.pop_front();
+                    return;
+                }
             }
             crate::inventory::ItemType::ParsnipSeed => {
                 let Some(tile) = farm_state.find(FarmTile::Tilled) else {
@@ -174,12 +197,26 @@ fn apply_active_item(mut active_items: ResMut<ActiveItems>, mut farm_state: ResM
     }
 }
 
+// transition dry sprouted to failed
+fn check_after(
+    mut farm_state: ResMut<FarmState>,
+    mut state: ResMut<NextState<FarmingBattleState>>,
+) {
+    // check failed
+    if let Some(tile) = farm_state.find(FarmTile::SproutedDry) {
+        *tile = FarmTile::Failed;
+        return;
+    }
+
+    state.set(FarmingBattleState::ShowSummary);
+}
+
 fn active_items_done(
     active_items: Res<ActiveItems>,
     mut state: ResMut<NextState<FarmingBattleState>>,
 ) {
     if active_items.items.is_empty() {
-        state.set(FarmingBattleState::ShowSummary);
+        state.set(FarmingBattleState::CheckFailed);
     }
 }
 
