@@ -94,10 +94,10 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
                             TextStyle {
                                 font: asset_server.load(FONT),
                                 font_size: TEXT_SIZE,
-                                color: Color::WHITE,
+                                color: Color::rgb_u8(42, 17, 4),
                             },
                         )
-                        .with_background_color(Color::BLUE)
+                        .with_background_color(Color::rgb_u8(215, 170, 133))
                         .with_style(Style {
                             size: Size {
                                 width: Val::Px(530.),

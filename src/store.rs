@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use crate::{
-    constants::{FONT, HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON, TEXT_SIZE},
+    constants::{FONT, TEXT_SIZE},
     dialog::{DialogExited, ShowDialog},
     game_state::{GameState, StoreSetupState},
     inventory::ActiveItem,
@@ -89,33 +89,58 @@ fn spawn_pedestals(mut commands: Commands) {
 #[derive(Component)]
 struct FinishButton;
 
+#[derive(Component)]
+struct FinishButtonMarker;
+
 impl FinishButton {
     fn spawn(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands
             .spawn((
-                FinishButton,
-                ButtonBundle {
+                FinishButtonMarker,
+                NodeBundle {
                     style: Style {
-                        // size: Size::all(Val::Percent(100.)),
+                        size: Size {
+                            width: Val::Percent(100.),
+                            height: Val::Percent(100.),
+                        },
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::End,
+                        justify_content: JustifyContent::End,
                         ..default()
                     },
-                    background_color: Color::GRAY.into(),
                     ..default()
                 },
             ))
-            .with_children(|child| {
-                child.spawn(TextBundle::from_section(
-                    "Finished",
+            .with_children(|builder| {
+                builder
+                    .spawn((
+                        FinishButton,
+                        ButtonBundle {
+                            style: Style {
+                                size: Size {
+                                    width: Val::Px(530.),
+                                    height: Val::Px(74.),
+                                },
+                                ..default()
+                            },
+                            background_color: Color::rgb_u8(215, 170, 133).into(),
+                            ..default()
+                        },
+                    ))
+                    .with_children(|child| {
+                        child.spawn(TextBundle::from_section(
+                    "Click on Barrels to select items to sell\nClick here when done to continue.",
                     TextStyle {
                         font: asset_server.load(FONT),
                         font_size: TEXT_SIZE,
-                        color: Color::WHITE,
+                        color: Color::rgb_u8(42, 17, 4),
                     },
                 ));
+                    });
             });
     }
 
-    fn despawn(mut commands: Commands, finish_button: Query<Entity, With<FinishButton>>) {
+    fn despawn(mut commands: Commands, finish_button: Query<Entity, With<FinishButtonMarker>>) {
         for e in &finish_button {
             commands.entity(e).despawn_recursive();
         }
@@ -128,18 +153,13 @@ impl FinishButton {
         >,
         mut state: ResMut<NextState<StoreSetupState>>,
     ) {
-        for (interaction, mut color) in &mut interaction_query {
+        for (interaction, mut _color) in &mut interaction_query {
             match *interaction {
                 Interaction::Clicked => {
                     state.set(StoreSetupState::FarmerBuy);
-                    *color = PRESSED_BUTTON.into();
                 }
-                Interaction::Hovered => {
-                    *color = HOVERED_BUTTON.into();
-                }
-                Interaction::None => {
-                    *color = NORMAL_BUTTON.into();
-                }
+                Interaction::Hovered => {}
+                Interaction::None => {}
             }
         }
     }
