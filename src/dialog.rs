@@ -1,5 +1,7 @@
 use bevy::{ecs::system::Command, prelude::*};
 use bevy_mod_yarn::prelude::{Dialogue, DialogueRunner, Statements, YarnAsset, YarnPlugin};
+
+use crate::constants::{TEXT_SIZE, FONT};
 pub struct DialogPlugin;
 impl Plugin for DialogPlugin {
     fn build(&self, app: &mut App) {
@@ -21,6 +23,9 @@ struct Dialog;
 // marker component to get the dialog text
 #[derive(Component)]
 struct DialogText;
+
+#[derive(Component)]
+struct DialogPortrait;
 
 #[derive(Component)]
 struct YarnDialog {
@@ -50,19 +55,6 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
         ))
         .with_children(|builder| {
-            // left margin
-            builder.spawn(NodeBundle {
-                style: Style {
-                    size: Size {
-                        width: Val::Percent(5.),
-                        height: Val::Percent(100.),
-                    },
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                },
-                ..default()
-            });
-
             // center column
             builder
                 .spawn(NodeBundle {
@@ -71,65 +63,50 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
                             width: Val::Percent(100.),
                             height: Val::Percent(100.),
                         },
-                        flex_direction: FlexDirection::Column,
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::End,
+                        justify_content: JustifyContent::End,
                         ..default()
                     },
                     ..default()
                 })
                 .with_children(|builder| {
-                    builder.spawn(NodeBundle {
-                        style: Style {
-                            size: Size {
-                                width: Val::Percent(100.),
-                                height: Val::Percent(70.),
+                    // Portrait
+                    builder.spawn((
+                        DialogPortrait,
+                        ImageBundle {
+                            image: UiImage {
+                                texture: asset_server.load("images/Store_Owner.png"),
+                                ..default()
                             },
-                            flex_direction: FlexDirection::Row,
+                            style: Style {
+                                size: Size::all(Val::Px(108.)),
+                                ..default()
+                            },
                             ..default()
                         },
-                        ..default()
-                    });
+                    ));
                     // Dialog Text
                     builder.spawn((
                         DialogText,
                         TextBundle::from_section(
                             "blah",
                             TextStyle {
-                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                font_size: 50.,
+                                font: asset_server.load(FONT),
+                                font_size: TEXT_SIZE,
                                 color: Color::WHITE,
                             },
                         )
                         .with_background_color(Color::BLUE)
                         .with_style(Style {
-                            flex_grow: 1.,
+                            size: Size {
+                                width: Val::Px(530.),
+                                height: Val::Px(74.),
+                            },
                             ..default()
                         }),
                     ));
-                    builder.spawn(NodeBundle {
-                        style: Style {
-                            size: Size {
-                                width: Val::Percent(100.),
-                                height: Val::Percent(5.),
-                            },
-                            flex_direction: FlexDirection::Row,
-                            ..default()
-                        },
-                        ..default()
-                    });
                 });
-
-            // right margin
-            builder.spawn(NodeBundle {
-                style: Style {
-                    size: Size {
-                        width: Val::Percent(5.),
-                        height: Val::Percent(100.),
-                    },
-                    flex_direction: FlexDirection::Row,
-                    ..default()
-                },
-                ..default()
-            });
         });
 }
 

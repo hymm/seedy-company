@@ -1,5 +1,5 @@
 use crate::{
-    constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON},
+    constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON, TEXT_SIZE, FONT},
     game_state::StoreSetupState,
     store::{ItemDisplay, SelectedPedestal},
 };
@@ -60,69 +60,41 @@ pub struct SellableItem {
     buy_back_price: i32,
 }
 
-const SELLABLE_ITEMS: [SellableItem; 9] = [
+const SELLABLE_ITEMS: [SellableItem; 5] = [
     SellableItem {
         name: "Hoe",
-        icon_path: "images/test-1.png",
+        icon_path: "images/Hoe.png",
         description: "Used to till the ground.",
         store_price: 100,
         buy_back_price: 0,
     },
     SellableItem {
         name: "Watering Can",
-        icon_path: "images/test-2.png",
+        icon_path: "images/Watering_Can.png",
         description: "Used for watering plants",
         store_price: 50,
         buy_back_price: 0,
     },
     SellableItem {
         name: "Scythe",
-        icon_path: "images/test-3.png",
+        icon_path: "images/Scythe.png",
         description: "Used for harvesting plants",
         store_price: 75,
         buy_back_price: 0,
     },
     SellableItem {
         name: "Parsnip Seeds",
-        icon_path: "images/test-4.png",
+        icon_path: "images/Parsnip_Seeds.png",
         description: "Grows in 3 days, Sells for 400g",
         store_price: 20,
         buy_back_price: 40,
     },
     SellableItem {
         name: "Blueberry Seeds",
-        icon_path: "images/test-5.png",
+        icon_path: "images/Blueberry_Seeds.png",
         description: "Item 5",
         store_price: 18,
         buy_back_price: 50,
-    },
-    SellableItem {
-        name: "Item 6",
-        icon_path: "images/test-6.png",
-        description: "Item 6",
-        store_price: 230,
-        buy_back_price: 0,
-    },
-    SellableItem {
-        name: "Item 7",
-        icon_path: "images/test-7.png",
-        description: "Item 7",
-        store_price: 230,
-        buy_back_price: 0,
-    },
-    SellableItem {
-        name: "Item 8",
-        icon_path: "images/test-8.png",
-        description: "Item 8",
-        store_price: 230,
-        buy_back_price: 0,
-    },
-    SellableItem {
-        name: "Item 9",
-        icon_path: "images/test-9.png",
-        description: "Item 9",
-        store_price: 230,
-        buy_back_price: 0,
     },
 ];
 
@@ -142,7 +114,7 @@ fn spawn_inventory(
             InventoryUi,
             NodeBundle {
                 style: Style {
-                    max_size: Size::all(Val::Px(120.)),
+                    max_size: Size::all(Val::Px(240.)),
                     align_content: AlignContent::FlexStart,
                     flex_wrap: FlexWrap::Wrap,
                     flex_direction: FlexDirection::Row,
@@ -158,7 +130,7 @@ fn spawn_inventory(
                     .with_children(|builder| {
                         builder.spawn(ImageBundle {
                             style: Style {
-                                size: Size::all(Val::Px(24.)),
+                                size: Size::all(Val::Px(48.)),
                                 ..default()
                             },
                             image: UiImage {
@@ -226,8 +198,8 @@ fn spawn_price_setter(
     let (item, item_image_handle) = items.get(set_price_for.0).unwrap();
 
     let default_text_style = TextStyle {
-        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-        font_size: 50.,
+        font: asset_server.load(FONT),
+        font_size: TEXT_SIZE,
         color: Color::WHITE,
     };
 
@@ -245,6 +217,7 @@ fn spawn_price_setter(
                     flex_direction: FlexDirection::Column,
                     ..default()
                 },
+                background_color: Color::DARK_GREEN.into(),
                 ..default()
             },
         ))
@@ -275,7 +248,7 @@ fn spawn_price_setter(
                     ..default()
                 },
                 style: Style {
-                    max_size: Size::all(Val::Px(24.)),
+                    size: Size::all(Val::Px(48.)),
                     ..default()
                 },
                 ..default()
@@ -345,8 +318,8 @@ impl CloseButton {
                 minus_builder.spawn(TextBundle::from_section(
                     "x",
                     TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 50.,
+                        font: asset_server.load(FONT),
+                        font_size: TEXT_SIZE,
                         color: Color::WHITE,
                     },
                 ));
@@ -381,8 +354,8 @@ struct CostText;
 impl CostText {
     fn spawn(builder: &mut ChildBuilder<'_, '_, '_>, asset_server: &AssetServer, cost: i32) {
         let text_style = TextStyle {
-            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-            font_size: 50.,
+            font: asset_server.load(FONT),
+            font_size: TEXT_SIZE,
             color: Color::WHITE,
         };
         builder
@@ -447,8 +420,8 @@ impl PriceDisplay {
     const INCREMENT: i32 = 50;
     fn spawn(builder: &mut ChildBuilder<'_, '_, '_>, asset_server: &AssetServer) {
         let text_style = TextStyle {
-            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-            font_size: 50.,
+            font: asset_server.load(FONT),
+            font_size: TEXT_SIZE,
             color: Color::WHITE,
         };
         builder
@@ -598,8 +571,8 @@ impl QuantityDisplay {
     const INCREMENT: i32 = 1;
     fn spawn(builder: &mut ChildBuilder<'_, '_, '_>, asset_server: &AssetServer) {
         let text_style = TextStyle {
-            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-            font_size: 50.,
+            font: asset_server.load(FONT),
+            font_size: TEXT_SIZE,
             color: Color::WHITE,
         };
         builder

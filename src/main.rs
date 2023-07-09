@@ -13,7 +13,8 @@ mod running;
 mod start_menu;
 mod store;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, window::WindowResolution};
+use bevy_pixel_camera::{PixelCameraBundle, PixelCameraPlugin};
 use dialog::DialogPlugin;
 use farm::FarmPlugin;
 use game_state::GameStatePlugin;
@@ -24,7 +25,18 @@ use store::StorePlugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: WindowResolution::new(640., 360.),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        )
+        .add_plugin(PixelCameraPlugin)
         .add_plugin(DialogPlugin)
         .add_plugin(GameStatePlugin)
         .add_plugin(StartMenuPlugin)
@@ -37,5 +49,5 @@ fn main() {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(PixelCameraBundle::from_zoom(2));
 }

@@ -1,4 +1,4 @@
-use crate::constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON};
+use crate::constants::{FONT, HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON};
 use crate::game_state::GameState;
 use bevy::prelude::*;
 
@@ -40,10 +40,11 @@ fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                             // horizontally center child text
                             justify_content: JustifyContent::Center,
                             // vertically center child text
-                            align_items: AlignItems::Center,
+                            align_items: AlignItems::End,
+                            margin: UiRect::bottom(Val::Px(24.0)),
                             ..default()
                         },
-                        background_color: NORMAL_BUTTON.into(),
+                        background_color: Color::rgba_u8(255, 255, 255, 0).into(),
                         ..default()
                     },
                 ))
@@ -51,9 +52,9 @@ fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     parent.spawn((
                         MenuMarker,
                         TextBundle::from_section(
-                            "Click or Press Space to Start",
+                            "Click to Start",
                             TextStyle {
-                                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                font: asset_server.load(FONT),
                                 font_size: 40.0,
                                 color: Color::rgb(0.9, 0.9, 0.9),
                             },
@@ -65,8 +66,7 @@ fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         MenuMarker,
         SpriteBundle {
-            texture: asset_server.load("start-screen.png"),
-            transform: Transform::from_xyz(360., 360., 1.0),
+            texture: asset_server.load("images/Start_Screen_Logo.png"),
             ..default()
         },
     ));
@@ -79,24 +79,12 @@ fn despawn_menu(mut commands: Commands, q: Query<Entity, With<MenuMarker>>) {
 }
 
 fn button_system(
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
-    >,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
     mut state: ResMut<NextState<GameState>>,
 ) {
-    for (interaction, mut color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Clicked => {
-                state.set(GameState::StoreSetup);
-                *color = PRESSED_BUTTON.into();
-            }
-            Interaction::Hovered => {
-                *color = HOVERED_BUTTON.into();
-            }
-            Interaction::None => {
-                *color = NORMAL_BUTTON.into();
-            }
+    for interaction in &mut interaction_query {
+        if *interaction == Interaction::Clicked {
+            state.set(GameState::StoreSetup);
         }
     }
 }

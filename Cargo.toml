@@ -7,3 +7,4 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 bevy = "0.10"
 bevy_mod_yarn = { git = "https://github.com/kaosat-dev/bevy_mod_yarn" }
+bevy_pixel_camera = "0.4.1"

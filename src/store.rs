@@ -1,5 +1,5 @@
 use crate::{
-    constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON},
+    constants::{HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON, TEXT_SIZE, FONT},
     dialog::{DialogExited, ShowDialog},
     game_state::{GameState, StoreSetupState},
 };
@@ -23,12 +23,31 @@ impl Plugin for StorePlugin {
         app.add_system(show_farmer_dialog.in_schedule(OnEnter(StoreSetupState::FarmerBuy)))
             .add_system(farmer_buy_done.run_if(in_state(StoreSetupState::FarmerBuy)));
 
-        app.add_system(despawn_store.in_schedule(OnExit(GameState::StoreSetup)));
+        app.add_system(Store::spawn_background.in_schedule(OnEnter(GameState::StoreSetup)))
+            .add_system(Store::despawn_store.in_schedule(OnExit(GameState::StoreSetup)));
     }
 }
 
 #[derive(Component)]
 pub struct Store;
+
+impl Store {
+    fn spawn_background(mut commands: Commands, asset_server: Res<AssetServer>) {
+        commands.spawn((
+            Store,
+            SpriteBundle {
+                texture: asset_server.load("images/Store_Spring.png"),
+                ..default()
+            },
+        ));
+    }
+
+    fn despawn_store(mut commands: Commands, store: Query<Entity, With<Store>>) {
+        for e in &store {
+            commands.entity(e).despawn_recursive();
+        }
+    }
+}
 
 #[derive(Component)]
 pub struct ItemDisplay;
@@ -57,7 +76,7 @@ fn spawn_pedestals(mut commands: Commands) {
                     custom_size: Some(Vec2::new(ItemDisplay::SIZE, ItemDisplay::SIZE)),
                     ..default()
                 },
-                transform: Transform::from_translation(Vec3::new(i as f32 * 48.0, 0., 0.)),
+                transform: Transform::from_translation(Vec3::new(i as f32 * 48.0, 0., 1.)),
                 ..default()
             },
         ));
@@ -85,8 +104,8 @@ impl FinishButton {
                 child.spawn(TextBundle::from_section(
                     "Finished",
                     TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 50.,
+                        font: asset_server.load(FONT),
+                        font_size: TEXT_SIZE,
                         color: Color::WHITE,
                     },
                 ));
@@ -162,11 +181,5 @@ fn farmer_buy_done(mut events: EventReader<DialogExited>, mut state: ResMut<Next
         if &event.node == "FarmerBuy" {
             state.set(GameState::FarmingBattle);
         }
-    }
-}
-
-fn despawn_store(mut commands: Commands, store: Query<Entity, With<Store>>) {
-    for e in &store {
-        commands.entity(e).despawn_recursive();
     }
 }

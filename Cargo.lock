@@ -656,6 +656,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_pixel_camera"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3f37638f0bcfad548effac6b872f8f220c7a077cc989f884fc8bb075cf55b47"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_ptr"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2689,6 +2698,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_mod_yarn",
+ "bevy_pixel_camera",
 ]
 
 [[package]]
