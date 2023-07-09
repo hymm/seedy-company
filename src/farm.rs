@@ -39,7 +39,7 @@ enum FarmTile {
     SproutedDry,
     SproutedWet,
     FullGrown,
-    Failed,
+    // Failed,
 }
 impl FarmTile {
     fn get_asset_path(&self) -> &str {
@@ -50,7 +50,7 @@ impl FarmTile {
             FarmTile::SproutedDry => "images/Dry_Sprout_Tile.png",
             FarmTile::SproutedWet => "images/Watered_Sprout_Tile.png",
             FarmTile::FullGrown => "images/Blueberry_Tile.png",
-            FarmTile::Failed => "images/Fail_Sprout_Tile.png",
+            // FarmTile::Failed => "images/Fail_Sprout_Tile.png",
         }
     }
 }

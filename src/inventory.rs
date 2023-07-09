@@ -58,7 +58,7 @@ pub struct SellableItem {
     // price it costs shopkeeper
     store_price: i32,
     // price it can be bought back for
-    buy_back_price: i32,
+    // buy_back_price: i32,
 }
 
 const SELLABLE_ITEMS: [SellableItem; 5] = [
@@ -68,7 +68,7 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
         icon_path: "images/Hoe.png",
         description: "Used to till the ground.",
         store_price: 100,
-        buy_back_price: 0,
+        // buy_back_price: 0,
     },
     SellableItem {
         name: "Watering Can",
@@ -76,7 +76,7 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
         icon_path: "images/Watering_Can.png",
         description: "Used for watering plants",
         store_price: 50,
-        buy_back_price: 0,
+        // buy_back_price: 0,
     },
     SellableItem {
         name: "Scythe",
@@ -84,7 +84,7 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
         icon_path: "images/Scythe.png",
         description: "Used for harvesting plants",
         store_price: 75,
-        buy_back_price: 0,
+        // buy_back_price: 0,
     },
     SellableItem {
         name: "Parsnip Seeds",
@@ -92,7 +92,7 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
         icon_path: "images/Parsnip_Seeds.png",
         description: "Grows in 3 days, Sells for 100g",
         store_price: 20,
-        buy_back_price: 40,
+        // buy_back_price: 40,
     },
     SellableItem {
         name: "Blueberry Seeds",
@@ -100,7 +100,7 @@ const SELLABLE_ITEMS: [SellableItem; 5] = [
         icon_path: "images/Blueberry_Seeds.png",
         description: "Grows in 5 days, Sells for 200g",
         store_price: 18,
-        buy_back_price: 50,
+        // buy_back_price: 50,
     },
 ];
 
