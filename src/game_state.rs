@@ -5,13 +5,15 @@ impl Plugin for GameStatePlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<GameState>()
             .add_state::<StoreSetupState>()
-            .add_system(StoreSetupState::exit_state.in_schedule(OnExit(GameState::StoreSetup)));
+            .add_systems(OnExit(GameState::StoreSetup), StoreSetupState::exit_state);
         app.add_state::<FarmingBattleState>()
-            .add_system(
-                FarmingBattleState::enter_state.in_schedule(OnEnter(GameState::FarmingBattle)),
+            .add_systems(
+                OnEnter(GameState::FarmingBattle),
+                FarmingBattleState::enter_state,
             )
-            .add_system(
-                FarmingBattleState::exit_state.in_schedule(OnExit(GameState::FarmingBattle)),
+            .add_systems(
+                OnExit(GameState::FarmingBattle),
+                FarmingBattleState::exit_state,
             );
     }
 }

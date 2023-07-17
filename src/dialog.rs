@@ -5,14 +5,19 @@ use crate::constants::{FONT, TEXT_SIZE};
 pub struct DialogPlugin;
 impl Plugin for DialogPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(YarnPlugin)
+        app.add_plugins(YarnPlugin)
             .add_event::<DialogExited>()
             .add_event::<OpenDialog>()
-            .add_startup_system(spawn_dialog)
-            .add_system(dialog_ready)
-            .add_system(open_dialog)
-            .add_system(dialogue_display)
-            .add_system(dialog_input_handling);
+            .add_systems(Startup, spawn_dialog)
+            .add_systems(
+                Update,
+                (
+                    dialog_ready,
+                    open_dialog,
+                    dialogue_display,
+                    dialog_input_handling,
+                ),
+            );
     }
 }
 
@@ -33,6 +38,7 @@ struct YarnDialog {
     pub start_node: String,
 }
 
+#[derive(Event)]
 pub struct DialogExited {
     pub node: String,
 }
@@ -43,10 +49,8 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
             Dialog,
             NodeBundle {
                 style: Style {
-                    size: Size {
-                        width: Val::Percent(100.),
-                        height: Val::Percent(100.),
-                    },
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
                     flex_direction: FlexDirection::Row,
                     display: Display::None,
                     ..default()
@@ -59,10 +63,8 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
             builder
                 .spawn(NodeBundle {
                     style: Style {
-                        size: Size {
-                            width: Val::Percent(100.),
-                            height: Val::Percent(100.),
-                        },
+                        width: Val::Percent(100.),
+                        height: Val::Percent(100.),
                         flex_direction: FlexDirection::Row,
                         align_items: AlignItems::End,
                         justify_content: JustifyContent::End,
@@ -80,7 +82,8 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
                                 ..default()
                             },
                             style: Style {
-                                size: Size::all(Val::Px(108.)),
+                                width: Val::Px(108.),
+                                height: Val::Px(108.),
                                 ..default()
                             },
                             ..default()
@@ -99,10 +102,8 @@ fn spawn_dialog(mut commands: Commands, asset_server: Res<AssetServer>) {
                         )
                         .with_background_color(Color::rgb_u8(215, 170, 133))
                         .with_style(Style {
-                            size: Size {
-                                width: Val::Px(530.),
-                                height: Val::Px(74.),
-                            },
+                            width: Val::Px(530.),
+                            height: Val::Px(74.),
                             ..default()
                         }),
                     ));
@@ -136,6 +137,7 @@ fn dialog_ready(
     }
 }
 
+#[derive(Event)]
 struct OpenDialog;
 fn open_dialog(
     mut commands: Commands,
@@ -230,7 +232,7 @@ pub struct ShowDialog {
 }
 
 impl Command for ShowDialog {
-    fn write(self, world: &mut World) {
+    fn apply(self, world: &mut World) {
         let dialog_text_entity = world
             .query_filtered::<Entity, With<DialogText>>()
             .single(world);

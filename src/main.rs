@@ -36,15 +36,17 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_plugin(PixelCameraPlugin)
-        .add_plugin(DialogPlugin)
-        .add_plugin(GameStatePlugin)
-        .add_plugin(StartMenuPlugin)
-        .add_plugin(RunningPlugin)
-        .add_plugin(InventoryPlugin)
-        .add_plugin(StorePlugin)
-        .add_plugin(FarmPlugin)
-        .add_startup_system(spawn_camera)
+        .add_plugins((
+            PixelCameraPlugin,
+            DialogPlugin,
+            GameStatePlugin,
+            StartMenuPlugin,
+            RunningPlugin,
+            InventoryPlugin,
+            StorePlugin,
+            FarmPlugin,
+        ))
+        .add_systems(Startup, spawn_camera)
         .run();
 }
 

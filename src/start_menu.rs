@@ -5,11 +5,12 @@ use bevy::prelude::*;
 pub struct StartMenuPlugin;
 impl Plugin for StartMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(spawn_menu.in_schedule(OnEnter(GameState::Start)))
+        app.add_systems(OnEnter(GameState::Start), spawn_menu)
             .add_systems(
+                Update,
                 (input_start, button_system).distributive_run_if(in_state(GameState::Start)),
             )
-            .add_system(despawn_menu.in_schedule(OnExit(GameState::Start)));
+            .add_systems(OnExit(GameState::Start), despawn_menu);
     }
 }
 
@@ -22,7 +23,7 @@ fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             MenuMarker,
             NodeBundle {
                 style: Style {
-                    size: Size::width(Val::Percent(100.0)),
+                    width: Val::Percent(100.0),
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
                     ..default()
@@ -36,7 +37,8 @@ fn spawn_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     MenuMarker,
                     ButtonBundle {
                         style: Style {
-                            size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(100.0),
                             // horizontally center child text
                             justify_content: JustifyContent::Center,
                             // vertically center child text
@@ -83,7 +85,7 @@ fn button_system(
     mut state: ResMut<NextState<GameState>>,
 ) {
     for interaction in &mut interaction_query {
-        if *interaction == Interaction::Clicked {
+        if *interaction == Interaction::Pressed {
             state.set(GameState::StoreSetup);
         }
     }

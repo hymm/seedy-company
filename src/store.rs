@@ -11,23 +11,35 @@ use bevy::{prelude::*, window::PrimaryWindow};
 pub struct StorePlugin;
 impl Plugin for StorePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(
-            spawn_pedestals
-                .in_schedule(OnEnter(StoreSetupState::PedestalSelect))
-                .run_if(|q: Query<&ItemDisplay>| q.is_empty()),
+        app.add_systems(
+            OnEnter(StoreSetupState::PedestalSelect),
+            spawn_pedestals.run_if(|q: Query<&ItemDisplay>| q.is_empty()),
         )
-        .add_system(FinishButton::spawn.in_schedule(OnEnter(StoreSetupState::PedestalSelect)))
-        .add_system(
+        .add_systems(
+            OnEnter(StoreSetupState::PedestalSelect),
+            FinishButton::spawn,
+        )
+        .add_systems(
+            Update,
             FinishButton::interaction_handler.run_if(in_state(StoreSetupState::PedestalSelect)),
         )
-        .add_system(FinishButton::despawn.in_schedule(OnExit(StoreSetupState::PedestalSelect)))
-        .add_system(handle_pedestal_click.run_if(in_state(StoreSetupState::PedestalSelect)));
+        .add_systems(
+            OnExit(StoreSetupState::PedestalSelect),
+            FinishButton::despawn,
+        )
+        .add_systems(
+            Update,
+            handle_pedestal_click.run_if(in_state(StoreSetupState::PedestalSelect)),
+        );
 
-        app.add_system(show_farmer_dialog.in_schedule(OnEnter(StoreSetupState::FarmerBuy)))
-            .add_system(farmer_buy_done.run_if(in_state(StoreSetupState::FarmerBuy)));
+        app.add_systems(OnEnter(StoreSetupState::FarmerBuy), show_farmer_dialog)
+            .add_systems(
+                Update,
+                farmer_buy_done.run_if(in_state(StoreSetupState::FarmerBuy)),
+            );
 
-        app.add_system(Store::spawn_background.in_schedule(OnEnter(GameState::StoreSetup)))
-            .add_system(Store::despawn_store.in_schedule(OnExit(GameState::StoreSetup)));
+        app.add_systems(OnEnter(GameState::StoreSetup), Store::spawn_background)
+            .add_systems(OnExit(GameState::StoreSetup), Store::despawn_store);
     }
 }
 
@@ -99,10 +111,8 @@ impl FinishButton {
                 FinishButtonMarker,
                 NodeBundle {
                     style: Style {
-                        size: Size {
-                            width: Val::Percent(100.),
-                            height: Val::Percent(100.),
-                        },
+                        width: Val::Percent(100.),
+                        height: Val::Percent(100.),
                         flex_direction: FlexDirection::Row,
                         align_items: AlignItems::End,
                         justify_content: JustifyContent::End,
@@ -117,10 +127,8 @@ impl FinishButton {
                         FinishButton,
                         ButtonBundle {
                             style: Style {
-                                size: Size {
-                                    width: Val::Px(530.),
-                                    height: Val::Px(74.),
-                                },
+                                width: Val::Px(530.),
+                                height: Val::Px(74.),
                                 ..default()
                             },
                             background_color: Color::rgb_u8(215, 170, 133).into(),
@@ -155,7 +163,7 @@ impl FinishButton {
     ) {
         for (interaction, mut _color) in &mut interaction_query {
             match *interaction {
-                Interaction::Clicked => {
+                Interaction::Pressed => {
                     state.set(StoreSetupState::FarmerBuy);
                 }
                 Interaction::Hovered => {}

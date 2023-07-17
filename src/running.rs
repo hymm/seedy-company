@@ -8,9 +8,12 @@ use crate::{
 pub struct RunningPlugin;
 impl Plugin for RunningPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(transition_store_setup.in_schedule(OnEnter(GameState::StoreSetup)))
-            .add_system(introduction.in_schedule(OnEnter(StoreSetupState::OpeningDialog)))
-            .add_system(welcome_done.run_if(in_state(StoreSetupState::OpeningDialog)));
+        app.add_systems(OnEnter(GameState::StoreSetup), transition_store_setup)
+            .add_systems(OnEnter(StoreSetupState::OpeningDialog), introduction)
+            .add_systems(
+                Update,
+                welcome_done.run_if(in_state(StoreSetupState::OpeningDialog)),
+            );
     }
 }
 

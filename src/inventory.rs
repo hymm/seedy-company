@@ -8,19 +8,21 @@ use bevy::prelude::*;
 pub struct InventoryPlugin;
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_items);
+        app.add_systems(Startup, spawn_items);
 
         // Item Selection systems
-        app.add_system(spawn_inventory.in_schedule(OnEnter(StoreSetupState::Inventory)))
+        app.add_systems(OnEnter(StoreSetupState::Inventory), spawn_inventory)
             .add_systems(
+                Update,
                 (selection_mouse_handler, || {})
                     .distributive_run_if(in_state(StoreSetupState::Inventory)),
             )
-            .add_system(despawn_inventory_ui.in_schedule(OnExit(StoreSetupState::Inventory)));
+            .add_systems(OnExit(StoreSetupState::Inventory), despawn_inventory_ui);
 
         // Price Setter Systems
-        app.add_system(spawn_price_setter.in_schedule(OnEnter(StoreSetupState::PriceSelect)))
+        app.add_systems(OnEnter(StoreSetupState::PriceSelect), spawn_price_setter)
             .add_systems(
+                Update,
                 (
                     CloseButton::interaction_handler,
                     PriceDisplay::update_text,
@@ -33,7 +35,7 @@ impl Plugin for InventoryPlugin {
                 )
                     .distributive_run_if(in_state(StoreSetupState::PriceSelect)),
             )
-            .add_system(despawn_price_setter.in_schedule(OnExit(StoreSetupState::PriceSelect)));
+            .add_systems(OnExit(StoreSetupState::PriceSelect), despawn_price_setter);
     }
 }
 
@@ -120,7 +122,8 @@ fn spawn_inventory(
             InventoryUi,
             NodeBundle {
                 style: Style {
-                    max_size: Size::all(Val::Px(240.)),
+                    max_width: Val::Px(240.),
+                    max_height: Val::Px(240.),
                     align_content: AlignContent::FlexStart,
                     flex_wrap: FlexWrap::Wrap,
                     flex_direction: FlexDirection::Row,
@@ -136,7 +139,8 @@ fn spawn_inventory(
                     .with_children(|builder| {
                         builder.spawn(ImageBundle {
                             style: Style {
-                                size: Size::all(Val::Px(48.)),
+                                width: Val::Px(48.),
+                                height: Val::Px(48.),
                                 ..default()
                             },
                             image: UiImage {
@@ -161,7 +165,7 @@ fn selection_mouse_handler(
 ) {
     for (e, interaction, mut color) in &mut interaction_query {
         match *interaction {
-            Interaction::Clicked => {
+            Interaction::Pressed => {
                 let item_entity = item_buttons.get(e).unwrap().item;
                 commands.insert_resource(SetPriceFor(item_entity));
                 state.set(StoreSetupState::PriceSelect);
@@ -254,7 +258,8 @@ fn spawn_price_setter(
                     ..default()
                 },
                 style: Style {
-                    size: Size::all(Val::Px(48.)),
+                    width: Val::Px(48.),
+                    height: Val::Px(48.),
                     ..default()
                 },
                 ..default()
@@ -341,7 +346,7 @@ impl CloseButton {
     ) {
         for (interaction, mut color) in &mut interaction_query {
             match *interaction {
-                Interaction::Clicked => {
+                Interaction::Pressed => {
                     state.set(StoreSetupState::Inventory);
                     *color = PRESSED_BUTTON.into();
                 }
@@ -376,7 +381,8 @@ impl CostText {
                 child_builder
                     .spawn(NodeBundle {
                         style: Style {
-                            size: Size::all(Val::Percent(100.)),
+                            width: Val::Percent(100.),
+                            height: Val::Percent(100.),
                             flex_direction: FlexDirection::Row,
                             justify_content: JustifyContent::FlexEnd,
                             flex_grow: 1.,
@@ -395,7 +401,8 @@ impl CostText {
                 child_builder
                     .spawn(NodeBundle {
                         style: Style {
-                            size: Size::all(Val::Percent(100.)),
+                            width: Val::Percent(100.),
+                            height: Val::Percent(100.),
                             flex_direction: FlexDirection::Row,
                             justify_content: JustifyContent::FlexEnd,
                             flex_grow: 1.,
@@ -443,7 +450,8 @@ impl PriceDisplay {
                 price_builder
                     .spawn(NodeBundle {
                         style: Style {
-                            size: Size::all(Val::Percent(100.)),
+                            width: Val::Percent(100.),
+                            height: Val::Percent(100.),
                             flex_direction: FlexDirection::Row,
                             justify_content: JustifyContent::FlexEnd,
                             flex_grow: 1.,
@@ -472,7 +480,8 @@ impl PriceDisplay {
                 price_builder
                     .spawn(NodeBundle {
                         style: Style {
-                            size: Size::all(Val::Percent(100.)),
+                            width: Val::Percent(100.),
+                            height: Val::Percent(100.),
                             flex_direction: FlexDirection::Row,
                             justify_content: JustifyContent::FlexEnd,
                             flex_grow: 1.,
@@ -521,7 +530,7 @@ impl PriceDisplay {
     ) {
         for (interaction, mut color) in &mut interaction_query {
             match *interaction {
-                Interaction::Clicked => {
+                Interaction::Pressed => {
                     let mut price = price.single_mut();
                     price.sell_at -= Self::INCREMENT;
                     if price.sell_at < 0 {
@@ -548,7 +557,7 @@ impl PriceDisplay {
     ) {
         for (interaction, mut color) in &mut interaction_query {
             match *interaction {
-                Interaction::Clicked => {
+                Interaction::Pressed => {
                     let mut price = price.single_mut();
                     price.sell_at += Self::INCREMENT;
                     if price.sell_at > 10000 {
@@ -594,7 +603,8 @@ impl QuantityDisplay {
                 price_builder
                     .spawn(NodeBundle {
                         style: Style {
-                            size: Size::all(Val::Percent(100.)),
+                            width: Val::Percent(100.),
+                            height: Val::Percent(100.),
                             flex_direction: FlexDirection::Row,
                             justify_content: JustifyContent::FlexEnd,
                             flex_grow: 1.,
@@ -623,7 +633,8 @@ impl QuantityDisplay {
                 price_builder
                     .spawn(NodeBundle {
                         style: Style {
-                            size: Size::all(Val::Percent(100.)),
+                            width: Val::Percent(100.),
+                            height: Val::Percent(100.),
                             flex_direction: FlexDirection::Row,
                             justify_content: JustifyContent::FlexEnd,
                             flex_grow: 1.,
@@ -672,7 +683,7 @@ impl QuantityDisplay {
     ) {
         for (interaction, mut color) in &mut interaction_query {
             match *interaction {
-                Interaction::Clicked => {
+                Interaction::Pressed => {
                     let mut price = price.single_mut();
                     price.quantity = (price.quantity - Self::INCREMENT).max(price.min_quantity);
                     price.sell_at = price.sell_at.max(price.quantity * price.store_price);
@@ -697,7 +708,7 @@ impl QuantityDisplay {
     ) {
         for (interaction, mut color) in &mut interaction_query {
             match *interaction {
-                Interaction::Clicked => {
+                Interaction::Pressed => {
                     let mut price = price.single_mut();
                     price.quantity = (price.quantity + Self::INCREMENT).min(price.max_quantity);
                     price.sell_at = price.sell_at.max(price.quantity * price.store_price);
@@ -749,7 +760,7 @@ impl DoneButton {
     ) {
         for (interaction, mut color) in &mut interaction_query {
             match *interaction {
-                Interaction::Clicked => {
+                Interaction::Pressed => {
                     let item = sellables.get(set_price_for.0).unwrap();
                     let (pedestal_entity, mut pedestal_sprite, mut pedestal_texture) =
                         pedestals.get_mut(selected_pedestal.0).unwrap();

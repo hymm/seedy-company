@@ -12,33 +12,45 @@ pub struct FarmPlugin;
 impl Plugin for FarmPlugin {
     fn build(&self, app: &mut App) {
         // GameState::FarmingBattle systems
-        app.add_system(FarmState::spawn_farm.in_schedule(OnEnter(GameState::FarmingBattle)))
-            .add_system(FarmState::update_farm.run_if(in_state(GameState::FarmingBattle)))
-            .add_system(FarmState::despawn_farm.in_schedule(OnExit(GameState::FarmingBattle)));
+        app.add_systems(OnEnter(GameState::FarmingBattle), FarmState::spawn_farm)
+            .add_systems(
+                Update,
+                FarmState::update_farm.run_if(in_state(GameState::FarmingBattle)),
+            )
+            .add_systems(OnExit(GameState::FarmingBattle), FarmState::despawn_farm);
 
-        app.add_system(check_full_grown.in_schedule(OnEnter(FarmingBattleState::CheckSeeded)))
-            .add_system(
+        app.add_systems(OnEnter(FarmingBattleState::CheckSeeded), check_full_grown)
+            .add_systems(
+                Update,
                 check_seeded
                     .run_if(in_state(FarmingBattleState::CheckSeeded))
                     .run_if(on_timer(Duration::from_secs_f32(0.5))),
             );
 
         // FarmingBattleState::ApplyItems systems
-        app.add_system(
+        app.add_systems(
+            Update,
             apply_active_item
                 .run_if(in_state(FarmingBattleState::ApplyItems))
                 .run_if(on_timer(Duration::from_secs_f32(0.5))),
         )
-        .add_system(active_items_done.run_if(in_state(FarmingBattleState::ApplyItems)));
+        .add_systems(
+            Update,
+            active_items_done.run_if(in_state(FarmingBattleState::ApplyItems)),
+        );
 
-        app.add_system(
+        app.add_systems(
+            Update,
             check_after
                 .run_if(in_state(FarmingBattleState::CheckFailed))
                 .run_if(on_timer(Duration::from_secs_f32(0.5))),
         );
 
-        app.add_system(enter_summary.in_schedule(OnEnter(FarmingBattleState::ShowSummary)))
-            .add_system(after_summary.run_if(in_state(FarmingBattleState::ShowSummary)));
+        app.add_systems(OnEnter(FarmingBattleState::ShowSummary), enter_summary)
+            .add_systems(
+                Update,
+                after_summary.run_if(in_state(FarmingBattleState::ShowSummary)),
+            );
     }
 }
 
